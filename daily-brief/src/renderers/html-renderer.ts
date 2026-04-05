@@ -1,4 +1,4 @@
-import type { DailyBrief, HNStory, GHNotification } from '../types/brief';
+import type { DailyBrief, HNStory, GHNotification } from '../types/brief.js';
 
 const MAX_SUMMARY_LENGTH = 280;
 
