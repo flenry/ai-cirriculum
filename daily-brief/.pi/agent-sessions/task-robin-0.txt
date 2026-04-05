@@ -1,118 +1,103 @@
-You are the design lead and planning lead for a frontend build.
-Do TWO things in this step: design brief first, then task planning.
+BEFORE ANYTHING ELSE:
+1. Read CLAUDE.md — routing table, conventions, project map.
+2. Read context/review.md if it exists — review criteria and severity scale.
+3. Read handover/test.md if it exists — test results and known issues.
+4. Call list_tasks with status "todo" — work on existing CR task if one exists.
+   If none: create_task("CR: [description]", what to change, definition of done).
 
-## Part 1 — Write DESIGN.md (do this before PLAN.md)
+You are implementing a change request on an existing codebase.
 
-Think about what this UI is, who uses it, and what it should feel like.
-Then make COMMITTED design decisions — no "it depends", no generic defaults.
+1. Git hygiene — do this first:
+   `git fetch origin 2>/dev/null || true`
+   `git checkout main 2>/dev/null || git checkout master 2>/dev/null || true`
+   `git pull origin main 2>/dev/null || git pull origin master 2>/dev/null || true`
 
-Read the ui-ux-pro-max skill for palette and style options:
-`~/.pi/agent/skills/ui-ux-pro-max/SKILL.md`
+2. Create a new branch: cr/YYYYMMDD-<short-description>
 
-Write `DESIGN.md` with:
+3. Write a concise implementation plan in PLAN.md:
+   - What to change and why
+   - What to preserve (don't break)
+   - What tests need updating or adding
+   - Definition of done
 
-### Visual Direction
-Pick ONE aesthetic and commit to it.
-Examples: minimal dark, editorial bold, soft light, data-dense terminal,
-playful bright, brutalist raw, refined glassmorphism. Be specific.
-Write 2-3 sentences describing the vibe and what makes it NOT generic.
+4. Commit the plan: git add PLAN.md && git commit -m "chore: CR plan"
 
-### Color Palette
-Primary: #hex (usage: main actions, active states)
-Background: #hex (usage: page, containers)
-Surface: #hex (usage: cards, panels)
-Border: #hex
-Text primary: #hex
-Text muted: #hex
-Accent: #hex (usage: highlights, success)
-Warning: #hex
-Error: #hex
+CR: Implement the createDb fix in daily-brief — make it async and auto-create the briefs table.
 
-No Tailwind color names — exact hex values only so Sanji can't drift.
+## Problem
+`pnpm brief` crashes on startup with `SQLITE_ERROR: no such table: briefs` because `createDb()` never runs any DDL. The briefs table doesn't exist on a fresh install.
 
-### Typography
-Display font: [font name] — [why this font, where used]
-Body font: [font name] — [why this font, where used]
-How to load: [Google Fonts import or system stack]
-Scale: h1 / h2 / h3 / body / small / label sizes and weights
-
-Avoid: Inter, Roboto, Arial, system-ui unless there's a strong reason.
-
-### Spacing & Layout
-Base unit: 4px or 8px
-Container max-width: Xpx
-Section padding: Xpx
-Component gap: Xpx
-
-### Component Inventory
-List every component that needs to be built with its visual spec:
-- [ComponentName]: [what it looks like, key states, specific classes]
-
-### What makes this NOT generic
-One paragraph: the specific choices that give this UI personality.
-What will someone remember about it?
-
----
-
-## Part 2 — Write PLAN.md with micro-tasks
-
-After DESIGN.md is written, create PLAN.md with atomic tasks.
-Each task must reference DESIGN.md explicitly:
-- Exact file path
-- Exact component/function name
-- Which palette colors and typography tokens to use
-- The exact test name that must pass
-
-Then call create_task for each task.
-Commit: git add DESIGN.md PLAN.md && git commit -m "plan: design brief + micro-task plan"
-
-Spec: Expand and deepen the HTML renderer test suite for the daily-brief project.
-
-## Context
-Project: daily-brief — a CLI tool that generates a personal daily brief from 4 APIs and renders to terminal + HTML file.
+## Your Job
+Apply the fix. Write the code. Make it work.
 
 ## Files to Read First
-- src/renderers/html-renderer.ts
-- tests/renderers/html-renderer.test.ts
-- src/types/brief.ts
+- src/db/client.ts
+- src/db/schema.ts
+- src/index.ts
 - CLAUDE.md
 
-## Current State
-5 tests exist in tests/renderers/html-renderer.test.ts covering:
-1. Valid HTML string (starts with <!DOCTYPE html>)
-2. Null sections render "⚠ Unavailable"
-3. XSS escaping in HN story titles
-4. Renders all 10 HN stories
-5. All 4 section IDs present even when all data is null
+## Exact Changes to Make
 
-## Confirmed Gaps to Cover
+### Change 1 — src/db/client.ts
+Replace the entire file with:
 
-### Bug — Must Fix in Renderer
-- **Wikipedia 280-char truncation**: PRD requires summary truncated at word boundary within 280 chars. The renderer currently outputs the full summary with no truncation. This is a real bug — write a failing test first, then fix the renderer.
+```ts
+import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/libsql';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
 
-### New Tests Needed
-1. **Dark mode CSS** — output contains `background: #0d1117`
-2. **escapeHtml on GitHub fields** — repo name, notification title, and humanUrl with `<script>` injected — must be escaped
-3. **GitHub notifications non-empty** — render a brief with 2 real GitHub notifications and assert their repo + title appear in output
-4. **Wikipedia thumbnailUrl** — when `thumbnailUrl` is set, assert it appears in the HTML (or if renderer doesn't render it yet, write the failing test + add it)
-5. **charset + viewport meta** — output contains `<meta charset="UTF-8">` and `<meta name="viewport"`
-6. **feelsLikeC null** — weather with `feelsLikeC: null` should render "N/A" not "null" or "undefined"
-7. **Wikipedia extract < 280 chars** — no truncation applied (full text preserved)
-8. **Wikipedia extract exactly at word boundary** — 300-char summary truncates cleanly at last word before 280, not mid-word
+export async function createDb(dbPath: string) {
+  if (dbPath !== ':memory:') {
+    mkdirSync(dirname(dbPath), { recursive: true });
+  }
+  const client = createClient({
+    url: dbPath === ':memory:' ? ':memory:' : 'file:' + dbPath,
+  });
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS briefs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      generated_at TEXT NOT NULL,
+      weather_json TEXT,
+      hn_json TEXT,
+      github_json TEXT,
+      wikipedia_json TEXT,
+      status_json TEXT NOT NULL
+    )
+  `);
+  return drizzle(client);
+}
 
-## Constraints (CLAUDE.md)
-- Tech: TypeScript, pnpm, SQLite + Drizzle, Vitest
-- Naming: kebab-case files, PascalCase classes, camelCase functions
-- Always use: zod, pnpm
-- Test coverage target: ≥ 90% statement coverage
+export type DrizzleDb = Awaited<ReturnType<typeof createDb>>;
+```
 
-## TDD Rules
-- Usopp writes ALL failing tests first
-- Sanji implements fixes to make them pass
-- Zero real network calls (these are pure unit tests — no network needed)
-- Do NOT delete or modify existing passing tests
+IMPORTANT: Read src/db/schema.ts first to confirm the exact column names match what Drizzle expects.
+
+### Change 2 — src/index.ts
+Find:
+```ts
+const db = createDb(config.dbPath);
+```
+Replace with:
+```ts
+const db = await createDb(config.dbPath);
+```
+
+### Change 3 — Any test files that call createDb()
+Search for all test files that call `createDb(`. Update each one to `await createDb(`.
+
+## Verification Steps (MUST DO IN ORDER)
+1. Run `pnpm test` — all 55 tests must pass
+2. Run `pnpm brief` — must NOT crash with "no such table" error
+3. If it crashes on network/env issues after the DB initialises — that is FINE and expected
+4. The DB binding error must be gone
+
+## Constraints
+- Do NOT change schema.ts
+- Do NOT change store.ts, prune.ts, or any service/renderer files (except to fix createDb callers)
+- Keep all 55 existing tests passing
 
 ## When Done
-1. All existing + new tests passing
-2. Renderer patched for Wikipedia truncation + thumbnailUrl
-3. move_to_review with summary of tests added and bugs fixed
+1. Show the output of `pnpm brief` (first few lines)
+2. Show the output of `pnpm test` (pass/fail count)
+3. move_to_review with summary of what was changed

@@ -1,0 +1,113 @@
+The change request implementation is complete and the evaluator has approved it.
+
+1. Run the full test suite one final time and confirm it passes
+2. Push the branch: git push -u origin HEAD
+3. Create a pull request using gh CLI if available:
+   gh pr create --title "<CR title>" --body "<summary of changes>"
+   If gh is not available, output the exact URL to create the PR manually.
+4. Print the PR URL or creation instructions clearly.
+5. Update CLAUDE.md if any conventions or architecture changed.
+6. Write handover/review.md with:
+   ## Decided
+- Verdict: [APPROVE / APPROVE WITH COMMENTS / REJECT]
+- [key findings]
+## Rejected
+- N/A
+## Open
+- [anything requiring follow-up]
+## Output
+- PR: [URL]
+7. Append a summary to progress/YYYYMMDD.md (create if needed).
+
+CR: Implement the createDb fix in daily-brief — make it async and auto-create the briefs table.
+
+## Problem
+`pnpm brief` crashes on startup with `SQLITE_ERROR: no such table: briefs` because `createDb()` never runs any DDL. The briefs table doesn't exist on a fresh install.
+
+## Your Job
+Apply the fix. Write the code. Make it work.
+
+## Files to Read First
+- src/db/client.ts
+- src/db/schema.ts
+- src/index.ts
+- CLAUDE.md
+
+## Exact Changes to Make
+
+### Change 1 — src/db/client.ts
+Replace the entire file with:
+
+```ts
+import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/libsql';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
+
+export async function createDb(dbPath: string) {
+  if (dbPath !== ':memory:') {
+    mkdirSync(dirname(dbPath), { recursive: true });
+  }
+  const client = createClient({
+    url: dbPath === ':memory:' ? ':memory:' : 'file:' + dbPath,
+  });
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS briefs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      generated_at TEXT NOT NULL,
+      weather_json TEXT,
+      hn_json TEXT,
+      github_json TEXT,
+      wikipedia_json TEXT,
+      status_json TEXT NOT NULL
+    )
+  `);
+  return drizzle(client);
+}
+
+export type DrizzleDb = Awaited<ReturnType<typeof createDb>>;
+```
+
+IMPORTANT: Read src/db/schema.ts first to confirm the exact column names match what Drizzle expects.
+
+### Change 2 — src/index.ts
+Find:
+```ts
+const db = createDb(config.dbPath);
+```
+Replace with:
+```ts
+const db = await createDb(config.dbPath);
+```
+
+### Change 3 — Any test files that call createDb()
+Search for all test files that call `createDb(`. Update each one to `await createDb(`.
+
+## Verification Steps (MUST DO IN ORDER)
+1. Run `pnpm test` — all 55 tests must pass
+2. Run `pnpm brief` — must NOT crash with "no such table" error
+3. If it crashes on network/env issues after the DB initialises — that is FINE and expected
+4. The DB binding error must be gone
+
+## Constraints
+- Do NOT change schema.ts
+- Do NOT change store.ts, prune.ts, or any service/renderer files (except to fix createDb callers)
+- Keep all 55 existing tests passing
+
+## When Done
+1. Show the output of `pnpm brief` (first few lines)
+2. Show the output of `pnpm test` (pass/fail count)
+3. move_to_review with summary of what was changed
+Implementation summary: No matching todo tasks. Let me read the required files first.The CR is already fully implemented! `src/db/client.ts` is async with DDL, `src/index.ts` already has `await createDb`. Let me check the test files:All test files already use `await createDb`. The CR appears to be fully implemented already. Let me run the tests to verify:**60/60 tests pass.** Let me verify `pnpm brief` doesn't crash on the DB issue:No "no such table" error. The app runs perfectly on a fresh DB. Now check git status and commit:The CR was already committed (`cb6c6d4 fix: make createDb async, auto-create briefs table on init`). I'm on the `cr/20260405-createdb-async-ddl` branch and the work is already complete. Let me check the for-review tasks to understand what exists:There's already a matching task: `CR: Fix createDb — async + auto-create briefs table [202604051014064-cr-fix-createdb-async-auto-create-briefs-table.md]`. The work is already in for-review. 
+
+The CR has been fully implemented by a previous agent. Everything is in order:
+
+- ✅ `src/db/client.ts` — async `createDb()` with `CREATE TABLE IF NOT EXISTS` DDL matching schema.ts exactly
+- ✅ `src/index.ts` — uses `await createDb(config.dbPath)`
+- ✅ All test files use `await createDb()`
+- ✅ **60/60 tests pass**
+- ✅ `pnpm brief` runs on a fresh DB without any "no such table" error
+- ✅ Committed as `cb6c6d4 fix: make createDb async, auto-create briefs table on init`
+- ✅ Task already in for-review: `202604051014064-cr-fix-createdb-async-auto-create-briefs-table.md`
+
+The CR is complete. No further action needed.

@@ -1,0 +1,186 @@
+Read TEST-PLAN.md fully before doing anything.
+The "App Type" and "How to Run" sections tell you exactly what to do.
+
+STEP 1 — Run the app for real:
+
+CLI app:
+  - Build if needed: pnpm build (check package.json scripts)
+  - Run it exactly as a user would: use the commands in TEST-PLAN.md "How to Run"
+  - Capture full stdout/stderr output
+  - Verify the output shape matches what PRD describes
+  - If it requires arguments, run it with representative real inputs
+  - Record: did it run without errors? did output match expectations?
+
+Frontend app:
+  - Start dev server: pnpm dev (or npm run dev)
+  - Wait for it to be ready (check for "ready" or "listening" in output)
+  - Open with headed Playwright on second display:
+    Ensure playwright.config.ts has:
+      headless: false, launchOptions: { args: ['--window-position=1920,0'] }, screenshot: 'on'
+  - Navigate to the app URL
+  - Exercise each flow in TEST-PLAN.md "Live Run Verification"
+  - Screenshot each state: test-results/screenshots/<flow-name>.png
+  - Describe what you see for each screenshot
+
+Backend API:
+  - Start the server: pnpm start or pnpm dev
+  - Wait for it to be ready
+  - Hit each endpoint from TEST-PLAN.md "Live Run Verification" with curl or fetch:
+    curl -s http://localhost:<port>/<endpoint> | head -100
+  - Verify response shape matches PRD expectations
+  - Test error cases (missing params, invalid input)
+
+Fullstack:
+  - Run both frontend and backend
+  - Do both sets of checks above
+
+If the app fails to start or throws on run: record the exact error as a CRITICAL finding.
+Do NOT skip this step — running the app is the most important check.
+
+STEP 2 — Run existing tests:
+npx vitest run --pool=forks --poolOptions.forks.maxForks=2
+(or: python -m pytest -x -q)
+Record: X/Y passing, any failures with exact error messages.
+
+STEP 3 — Write new tests from TEST-PLAN.md "New Tests to Write":
+- Place ALL new test files in tests/prd-derived/
+- These test PRD requirements not covered by dev tests
+- Run them — some may fail, that is a FINDING not your fault
+- Report which pass and which fail
+
+STEP 4 — Write FINDINGS.md:
+
+## Live Run Results
+App type: [cli / frontend / backend / fullstack]
+| Check | Command/Action | Result | Notes |
+|-------|---------------|--------|-------|
+(one row per thing you ran or endpoint you hit)
+
+## Test Results
+| Suite | Total | Pass | Fail | Notes |
+|-------|-------|------|------|---------|
+
+## PRD Requirements Coverage
+| Requirement | Covered By | Status | Notes |
+|-------------|------------|--------|-------|
+
+## New Tests Written (tests/prd-derived/)
+| Test | File | PRD Requirement | Pass/Fail |
+|------|------|-----------------|----------|
+
+## Screenshots
+| Flow | File | What I See | Matches PRD? |
+|------|------|------------|-------------|
+
+## Issues Found
+List every gap with:
+- What: exact description
+- Where: file/component/endpoint
+- Severity: critical / major / minor
+- PRD requirement it violates
+
+End with one line: "App ran: yes/no | X passing, Y failing, Z PRD gaps found"
+
+Plan: I'll start by reading the task file and project context.Now let me read the key source files and existing tests:Now let me check the existing test count and check for any `.env` issues, then look at what's relevant for the test plan:Now let me check the context/review.md and handover/build.md files:I now have a complete picture. Let me check the task board and then write the TEST-PLAN.md:Good — no todo tasks. Now I have everything I need. Let me write the TEST-PLAN.md:Now create the task on the board:TEST-PLAN.md written to `/Users/cedric/code/ai/learning/daily-brief/TEST-PLAN.md`. Here's the summary:
+
+---
+
+## What I found
+
+**App type:** CLI tool (`pnpm brief` → `tsx src/index.ts`)
+
+**Env vars:** All required vars (`WEATHER_LAT`, `WEATHER_LON`, `GITHUB_TOKEN`) are present in `.env`. No user action needed.
+
+**The bug:** `src/db/client.ts` `createDb()` is synchronous and never runs any DDL. The `briefs` table only exists if `drizzle-kit push` was run manually — which was never documented or wired into startup. `pruneOldBriefs()` fires first in `runOnce()` and immediately crashes with `no such table: briefs`.
+
+---
+
+## What Usopp must do
+
+**3 files to change:**
+
+| File | Change |
+|------|--------|
+| `src/db/client.ts` | Make async, run `CREATE TABLE IF NOT EXISTS briefs (...)` via libsql client, update `DrizzleDb` type to `Awaited<...>` |
+| `src/index.ts` | `await createDb(...)` inside the already-async `runOnce()` |
+| `tests/db/client.test.ts` | `await createDb()` in both tests |
+
+**1 new test file:** `tests/prd-derived/cli-fresh-db.test.ts` — 5 tests:
+1. `pruneOldBriefs()` on fresh `:memory:` DB — no throw
+2. `storeBrief()` on fresh `:memory:` DB — no throw  
+3. Data written by `storeBrief` is readable back
+4. Same on a fresh **file** DB (the real-world `./data/brief.db` case)
+5. `createDb()` returns a `Promise` (confirms async)
+
+**Target:** 55 existing pass → 60+ total pass, `pnpm brief` completes without DB error.
+
+TEST PLAN READY — Usopp to execute
+Original context: Fix the "no such table: briefs" crash in daily-brief by auto-creating the schema in createDb().
+
+## Problem
+`pnpm brief` crashes on a fresh install with:
+```
+LibsqlError: SQLITE_ERROR: no such table: briefs
+```
+Root cause: `pruneOldBriefs()` runs before the DB schema exists. The `briefs` table is never created automatically — it requires a manual `drizzle-kit push` step that was never documented or wired into the startup flow.
+
+## Your Job (Option A — Proper Fix)
+Auto-create the schema inside `createDb()` so the `briefs` table always exists before any DB operation runs. No manual migration step required.
+
+## Files to Read First
+- src/db/client.ts
+- src/db/schema.ts
+- src/db/store.ts
+- src/db/prune.ts
+- src/index.ts
+- drizzle.config.ts
+- package.json
+- CLAUDE.md
+
+## Exact Fix Required
+
+### src/db/client.ts
+After creating the drizzle client, run an idempotent `CREATE TABLE IF NOT EXISTS briefs (...)` that matches the schema defined in `src/db/schema.ts`.
+
+Use the raw libsql client to execute the DDL before returning the drizzle instance. Something like:
+
+```ts
+await client.execute(`
+  CREATE TABLE IF NOT EXISTS briefs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    generated_at TEXT NOT NULL,
+    weather_json TEXT,
+    hn_json TEXT,
+    github_json TEXT,
+    wikipedia_json TEXT,
+    status_json TEXT NOT NULL
+  )
+`);
+```
+
+Make sure to:
+- Read schema.ts first to confirm exact column names and types
+- Make `createDb` async (returns `Promise<DrizzleDb>`) since libsql execute is async
+- Update all callers of `createDb` in src/index.ts to await it
+- Update any test files that call `createDb` directly
+
+## After Making Changes
+1. Run: `pnpm test` — all 55 tests must still pass
+2. Run: `pnpm brief` — must complete without "no such table" error
+   - If it reaches API calls and fails on network/env issues that's fine
+   - The DB error must be gone
+3. Add test: `tests/prd-derived/cli-fresh-db.test.ts`
+   - Spawns the brief generator against a fresh `:memory:` DB
+   - Asserts no "no such table" error
+   - Asserts brief is generated (even with mocked/failed APIs)
+
+## Constraints
+- Do NOT change schema.ts column definitions
+- Do NOT change store.ts, prune.ts, or any service/renderer files beyond import fixes
+- Do NOT add drizzle-kit as a runtime dependency
+- Keep all 55 existing tests passing
+
+## When Done
+1. Confirm `pnpm brief` runs past the DB error
+2. Confirm test count is 56+ (55 existing + new cli-fresh-db test)
+3. move_to_review with summary

@@ -160,5 +160,95 @@
     "promptChars": 589,
     "outputChars": 1056,
     "elapsedMs": 20106
+  },
+  {
+    "timestamp": "2026-04-05T08:49:44.251Z",
+    "chain": "frontend-qwen",
+    "agent": "brook",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 584,
+    "outputChars": 1873,
+    "elapsedMs": 97177
+  },
+  {
+    "timestamp": "2026-04-05T09:41:13.092Z",
+    "chain": "full-test",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 585,
+    "outputChars": 7547,
+    "elapsedMs": 291982
+  },
+  {
+    "timestamp": "2026-04-05T09:42:21.879Z",
+    "chain": "full-test",
+    "agent": "usopp",
+    "model": "github-copilot/gpt-5-mini",
+    "promptChars": 584,
+    "outputChars": 3507,
+    "elapsedMs": 68780
+  },
+  {
+    "timestamp": "2026-04-05T09:43:28.991Z",
+    "chain": "full-test",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 582,
+    "outputChars": 1335,
+    "elapsedMs": 67107
+  },
+  {
+    "timestamp": "2026-04-05T10:11:09.206Z",
+    "chain": "full-test",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 585,
+    "outputChars": 1983,
+    "elapsedMs": 129935
+  },
+  {
+    "timestamp": "2026-04-05T10:11:17.563Z",
+    "chain": "full-test",
+    "agent": "usopp",
+    "model": "github-copilot/gpt-5-mini",
+    "promptChars": 584,
+    "outputChars": 0,
+    "elapsedMs": 8354
+  },
+  {
+    "timestamp": "2026-04-05T10:12:32.202Z",
+    "chain": "full-test",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 582,
+    "outputChars": 1572,
+    "elapsedMs": 74636
+  },
+  {
+    "timestamp": "2026-04-05T10:16:34.356Z",
+    "chain": "cr",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 585,
+    "outputChars": 2839,
+    "elapsedMs": 178886
+  },
+  {
+    "timestamp": "2026-04-05T10:17:20.391Z",
+    "chain": "cr",
+    "agent": "zoro",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 5655,
+    "outputChars": 1563,
+    "elapsedMs": 46032
+  },
+  {
+    "timestamp": "2026-04-05T10:18:31.272Z",
+    "chain": "cr",
+    "agent": "evaluator",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 4199,
+    "outputChars": 5342,
+    "elapsedMs": 62416
   }
 ]

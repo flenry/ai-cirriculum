@@ -19,7 +19,7 @@ Read the files listed for your stage. Skip everything else unless explicitly nee
 - **Runtime**: Node.js (ESM, `tsx` for execution)
 - **Language**: TypeScript (strict mode)
 - **Package Manager**: pnpm
-- **ORM**: Drizzle ORM + better-sqlite3
+- **ORM**: Drizzle ORM + `@libsql/client` (async SQLite via libSQL)
 - **Validation**: zod
 - **Scheduling**: node-cron
 - **Rendering**: chalk (terminal), raw HTML string (file output)
@@ -36,7 +36,7 @@ daily-brief/
 │   │   ├── github-api.ts     # GitHub notifications REST API
 │   │   └── wikipedia-api.ts  # Wikipedia random article REST API
 │   ├── db/
-│   │   ├── client.ts         # createDb(path) → Drizzle DB instance
+│   │   ├── client.ts         # async createDb(path) → Drizzle DB instance; runs CREATE TABLE IF NOT EXISTS
 │   │   ├── schema.ts         # Drizzle schema: briefs table
 │   │   ├── store.ts          # storeBrief(db, brief)
 │   │   └── prune.ts          # pruneOldBriefs(db) — keeps last 30 days
@@ -70,22 +70,23 @@ daily-brief/
 - All API modules export a single async function, return typed data or throw
 - Partial brief policy: failed sections produce `null` data + `status.ok = false`, never abort the whole brief
 - All external HTTP in tests is intercepted via MSW — zero real network calls
-- DB layer uses Drizzle ORM with better-sqlite3 (synchronous SQLite)
+- DB layer uses Drizzle ORM with `@libsql/client` (async libSQL); `createDb()` is async and runs DDL at startup
+- `DrizzleDb` type exported from `src/db/client.ts` — use it for function signatures
 
 ## Current State (2026-04-05)
 
-**Test-expansion stage complete.** Full implementation + deep HTML renderer tests.
+**CR complete.** All 60 tests pass. `pnpm brief` runs on a fresh install without errors.
 
 - ✅ 4 API modules (weather, HN, GitHub, Wikipedia) with zod validation
-- ✅ DB layer: schema, client, store, prune (30-day retention)
+- ✅ DB layer: schema, client (async + DDL), store, prune (30-day retention)
 - ✅ 2 renderers: terminal (chalk) and HTML file
 - ✅ brief-service orchestrator with partial-failure tolerance
 - ✅ Scheduler wrapper (node-cron) + CLI entry point
 - ✅ MSW mock infrastructure — all API tests pass
 - ✅ HTML renderer: 15 tests covering truncation, XSS escaping, dark mode, thumbnails, null handling, GitHub notifications, meta tags
-- ⚠️ DB tests fail on Node v24 — better-sqlite3 lacks prebuilt binary for Node v24.13.0/darwin/arm64. Tests pass on Node ≤22.
-
-**Known Issue:** `better-sqlite3@12.8.0` doesn't ship a prebuilt native binding for Node v24. Use Node 20 or 22 for DB tests, or run `pnpm rebuild better-sqlite3` to compile from source.
+- ✅ `tests/prd-derived/cli-fresh-db.test.ts` — 5 integration tests confirming fresh-DB startup works
+- ✅ Migrated from `better-sqlite3` to `@libsql/client` — works on Node v24, no native binding required
+- ✅ **60/60 tests pass on Node v24.13.0** (darwin/arm64)
 
 ## Design System
 
@@ -97,8 +98,8 @@ The HTML output follows a strict "Refined GitHub-Dark meets Editorial Print" des
 
 - Run the brief once: `pnpm brief`
 - Run with cron scheduler: `pnpm brief --watch`
-- Run tests (non-DB): all API, lib, renderer, and service tests pass on any Node version
-- DB tests require Node ≤22 or rebuilt native bindings
+- Run tests: `npx vitest run --pool=forks --poolOptions.forks.maxForks=2` — all 60 pass on any Node version
+- No native binding required — `@libsql/client` is pure JS/WASM
 
 ## Environment Variables
 
@@ -120,4 +121,4 @@ Drizzle ORM, zod, pnpm
 Before starting any work: `list_tasks("todo")` — work on existing tasks before creating new ones.
 After completing work: `move_to_review` — never self-approve.
 
-_Last updated: 2026-04-05_
+_Last updated: 2026-04-05 (post-CR: createDb async + DDL fix)_
