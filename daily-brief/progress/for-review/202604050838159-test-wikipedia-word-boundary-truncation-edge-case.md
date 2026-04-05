@@ -1,6 +1,6 @@
 # Task: Test: Wikipedia word-boundary truncation edge case
 
-**Status:** todo
+**Status:** for-review
 **Created:** 2026-04-05 16:38:15
 **ID:** 202604050838159
 
@@ -13,3 +13,18 @@ Write a failing test named 'truncates at last word boundary before 280 chars not
 ## Expected Outcome
 
 Test is RED before renderer fix, GREEN after Task 2.1.
+
+---
+
+## Review
+
+**Moved to Review:** 2026-04-05 16:44:45
+**PR:** _(no PR — direct commit)_
+
+### What Was Done
+
+Test for word-boundary truncation edge case (275 chars at boundary).
+
+### How It Was Tested
+
+Test passes with renderer fix.

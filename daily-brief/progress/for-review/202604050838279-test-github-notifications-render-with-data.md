@@ -1,6 +1,6 @@
 # Task: Test: GitHub notifications render with data
 
-**Status:** todo
+**Status:** for-review
 **Created:** 2026-04-05 16:38:27
 **ID:** 202604050838279
 
@@ -13,3 +13,18 @@ Write a test named 'renders GitHub notifications with repo and title'. Input: br
 ## Expected Outcome
 
 Test is GREEN immediately (renderer already maps gh fields to HTML).
+
+---
+
+## Review
+
+**Moved to Review:** 2026-04-05 16:44:53
+**PR:** _(no PR — direct commit)_
+
+### What Was Done
+
+Test confirming GitHub notifications render with repo and title data.
+
+### How It Was Tested
+
+Test passes.

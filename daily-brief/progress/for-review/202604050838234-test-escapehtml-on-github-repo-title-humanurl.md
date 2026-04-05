@@ -1,6 +1,6 @@
 # Task: Test: escapeHtml on GitHub repo, title, humanUrl
 
-**Status:** todo
+**Status:** for-review
 **Created:** 2026-04-05 16:38:23
 **ID:** 202604050838234
 
@@ -13,3 +13,18 @@ Write a test named 'escapes HTML in GitHub notification fields'. Input: one ghNo
 ## Expected Outcome
 
 Test is GREEN immediately (renderer already applies escapeHtml to gh fields).
+
+---
+
+## Review
+
+**Moved to Review:** 2026-04-05 16:44:53
+**PR:** _(no PR — direct commit)_
+
+### What Was Done
+
+Test for escapeHtml on GitHub notification fields (repo, title, humanUrl).
+
+### How It Was Tested
+
+Test passes.

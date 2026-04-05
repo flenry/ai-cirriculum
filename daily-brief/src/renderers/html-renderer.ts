@@ -1,4 +1,4 @@
-import type { DailyBrief } from '../types/brief';
+import type { DailyBrief, HNStory, GHNotification } from '../types/brief';
 
 const MAX_SUMMARY_LENGTH = 280;
 
@@ -26,7 +26,7 @@ export function renderToHtml(brief: DailyBrief): string {
   const storiesHtml = brief.hnStories.length > 0
     ? brief.hnStories
         .map(
-          (story, i) =>
+          (story: HNStory, i: number) =>
             `<li><span class="story-rank">${i + 1}.</span> <a href="${escapeHtml(story.url ?? '#')}">${escapeHtml(story.title)}</a> <span class="meta">(${escapeHtml(story.author)} — <span class="data-val">${story.points}</span> pts)</span></li>`
         )
         .join('')
@@ -35,7 +35,7 @@ export function renderToHtml(brief: DailyBrief): string {
   const ghHtml = brief.ghNotifications.length > 0
     ? brief.ghNotifications
         .map(
-          (n) =>
+          (n: GHNotification) =>
             `<li><span class="gh-type">[${escapeHtml(n.type)}]</span> <span class="gh-repo">${escapeHtml(n.repo)}</span> — ${escapeHtml(n.title)} — <a href="${escapeHtml(n.humanUrl)}">${escapeHtml(n.humanUrl)}</a></li>`
         )
         .join('')
