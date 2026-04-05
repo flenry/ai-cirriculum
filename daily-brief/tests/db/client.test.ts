@@ -13,13 +13,13 @@ describe('db/client', () => {
     }
   });
 
-  it('creates db at specified path', () => {
+  it('creates db at specified path', async () => {
     const dbPath = path.join(os.tmpdir(), 'test-brief-client.db');
-    expect(() => createDb(dbPath)).not.toThrow();
+    await expect(createDb(dbPath)).resolves.toBeDefined();
     expect(fs.existsSync(dbPath)).toBe(true);
   });
 
-  it('works with :memory:', () => {
-    expect(() => createDb(':memory:')).not.toThrow();
+  it('works with :memory:', async () => {
+    await expect(createDb(':memory:')).resolves.toBeDefined();
   });
 });

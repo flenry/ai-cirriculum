@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { sql } from 'drizzle-orm';
 import { briefs } from '../../src/db/schema';
 import { createDb } from '../../src/db/client';
 import { storeBrief } from '../../src/db/store';
+import type { DrizzleDb } from '../../src/db/client';
 import type { DailyBrief } from '../../src/types/brief';
 
 describe('db/store', () => {
-  const db = createDb(':memory:');
+  let db: DrizzleDb;
 
   const mockBrief: DailyBrief = {
     generatedAt: new Date().toISOString(),
@@ -22,13 +22,8 @@ describe('db/store', () => {
     },
   };
 
-  beforeAll(() => {
-    db.run(sql`CREATE TABLE IF NOT EXISTS briefs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      generated_at TEXT NOT NULL UNIQUE,
-      payload TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (current_timestamp)
-    )`);
+  beforeAll(async () => {
+    db = await createDb(':memory:');
   });
 
   it('inserts brief into db', async () => {

@@ -1,14 +1,24 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/libsql';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
 
-export function createDb(dbPath: string) {
+export async function createDb(dbPath: string) {
   if (dbPath !== ':memory:') {
     mkdirSync(dirname(dbPath), { recursive: true });
   }
-  const sqlite = new Database(dbPath);
-  return drizzle(sqlite);
+  const client = createClient({
+    url: dbPath === ':memory:' ? ':memory:' : 'file:' + dbPath,
+  });
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS briefs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      generated_at TEXT NOT NULL UNIQUE,
+      payload TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (current_timestamp)
+    )
+  `);
+  return drizzle(client);
 }
 
-export type DrizzleDb = ReturnType<typeof createDb>;
+export type DrizzleDb = Awaited<ReturnType<typeof createDb>>;

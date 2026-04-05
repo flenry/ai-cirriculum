@@ -12,7 +12,7 @@ import { dirname } from 'path';
 
 async function runOnce(): Promise<void> {
   const config = loadConfig();
-  const db = createDb(config.dbPath);
+  const db = await createDb(config.dbPath);
   await pruneOldBriefs(db);
   const brief = await generateBrief(config);
   renderToTerminal(brief);

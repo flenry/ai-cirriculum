@@ -1,19 +1,14 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { sql } from 'drizzle-orm';
 import { briefs } from '../../src/db/schema';
 import { createDb } from '../../src/db/client';
 import { pruneOldBriefs } from '../../src/db/prune';
+import type { DrizzleDb } from '../../src/db/client';
 
 describe('db/prune', () => {
-  const db = createDb(':memory:');
+  let db: DrizzleDb;
 
-  beforeAll(() => {
-    db.run(sql`CREATE TABLE IF NOT EXISTS briefs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      generated_at TEXT NOT NULL UNIQUE,
-      payload TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (current_timestamp)
-    )`);
+  beforeAll(async () => {
+    db = await createDb(':memory:');
   });
 
   it('deletes records older than 30 days', async () => {
