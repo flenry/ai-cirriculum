@@ -124,5 +124,14 @@
     "promptChars": 583,
     "outputChars": 2084,
     "elapsedMs": 225945
+  },
+  {
+    "timestamp": "2026-04-05T08:40:48.866Z",
+    "chain": "frontend-qwen",
+    "agent": "usopp-qwen",
+    "model": "openrouter/qwen/qwen3.6-plus:free",
+    "promptChars": 2806,
+    "outputChars": 1848,
+    "elapsedMs": 77103
   }
 ]
