@@ -1,0 +1,83 @@
+Final synthesis. Is the analysis sound? Research online for additional context.
+Concrete next steps.
+
+WHEN DONE — write handover/research.md with:
+## Decided
+- [confirmed findings]
+## Rejected
+- [what was ruled out and why]
+## Open
+- [unknowns for board-prd]
+## Output
+- [key sources, APIs, data shapes verified]
+
+Then call move_to_review for the research task with a summary of findings.
+
+Done.
+
+Updated:
+- `handover/research.md`
+
+I appended a skeptical stress-test addendum that:
+- distinguishes supported findings from overclaims
+- challenges weak assumptions
+- identifies missed risks and data gaps
+- adds board-PRD questions that should be resolved before locking scope
+
+Key verdict:
+- **Confidence:** Medium-low
+- **Recommendation:** Refine before PRD lock
+- **Main risk:** scheduler reliability plus API assumptions that were not truly live-validated
+
+Also moved the task to review:
+- `progress/for-review/202604050717530-research-stress-test-daily-brief-findings.md`
+
+If you want, I can next turn this into a concise **board-prd decision checklist**.
+
+Original: Research stage for the daily-brief project.
+
+Project: daily-brief
+Description: A personal daily brief generator that pulls weather, top HN stories, GitHub notifications, and a random Wikipedia article. Renders as terminal output (chalk) and HTML file. Runs on a cron schedule. Stores last 30 days of briefs in SQLite.
+
+## Your Job (Research Only — No Code)
+Validate all APIs, map data shapes, identify technical constraints, and surface unknowns for the PRD stage.
+
+## APIs to Research
+1. **OpenWeatherMap** — current weather by city/coords. Free tier limits, auth (API key), endpoint, response shape.
+2. **HN Algolia** — top HN stories. Endpoint, no auth, response shape, how to get "top" stories.
+3. **GitHub Notifications** — personal notifications API. Auth (PAT), endpoint, response shape, rate limits.
+4. **Wikipedia Random** — random article endpoint. No auth, response shape, how to get a summary.
+
+## Technical Areas to Map
+- SQLite schema: storing 30 days of briefs (what to store, how to prune)
+- Cron scheduling: node-cron vs cron vs system cron — which fits best for a TypeScript project with env-var-configurable time
+- Terminal rendering: chalk options, structured layout
+- HTML rendering: lightweight templating (no framework) for clean email-style HTML output
+- Mocking strategy: how to mock all 4 APIs in Vitest with zero real network hits
+
+## Must-Haves (from PLAN.md)
+- Fetch from 4 live APIs: OpenWeatherMap, HN Algolia, GitHub notifications, Wikipedia random
+- Render as terminal output (chalk) and HTML file
+- Schedule via cron — configurable time via env var
+- Store last 30 days of briefs in SQLite
+- All external API calls mocked in tests — zero real network hits in test suite
+
+## Out of Scope
+- No email sending in v1
+- No web dashboard or frontend
+- No auth system
+
+## Constraints (CLAUDE.md)
+- Tech: TypeScript, pnpm, SQLite + Drizzle, Vitest
+- Always use: Drizzle ORM, zod, pnpm, shadcn/ui
+- File structure: src/api/, src/db/, src/services/, src/types/
+- Naming: kebab-case files, PascalCase classes, camelCase functions, snake_case DB columns
+
+## Files to Read First
+- CLAUDE.md
+- PLAN.md
+- context/research.md
+
+## When Done
+1. Write findings to handover/research.md
+2. move_to_review with a summary of what was found

@@ -1,0 +1,72 @@
+Board-PRD stage for the daily-brief project.
+
+Project: daily-brief
+Description: A personal daily brief generator that pulls weather, top HN stories, GitHub notifications, and a random Wikipedia article. Renders as terminal output (chalk) and HTML file. Runs on a cron schedule. Stores last 30 days of briefs in SQLite.
+
+## Your Job
+Translate research findings into a versioned PRD.md (v1.0) and handover/prd.md for the build agent.
+
+## Files to Read First
+- CLAUDE.md
+- PLAN.md
+- PRD.md
+- context/board-prd.md
+- handover/research.md
+
+## Research Findings Summary (from handover/research.md)
+
+### Decided
+- Weather: OpenWeatherMap `GET /data/2.5/weather?q={city}&appid={key}` — free tier 1000 calls/day
+- HN: Algolia `GET http://hn.algolia.com/api/v1/search?tags=front_page` — no auth
+- GitHub: `GET https://api.github.com/notifications` — PAT required, 5000 req/hr
+- Wikipedia: `GET https://en.wikipedia.org/api/rest_v1/page/random/summary` — no auth
+- SQLite + Drizzle ORM for storage
+- node-cron for scheduling via CRON_SCHEDULE env var
+- chalk for terminal, ES6 template literals for HTML
+- Vitest + MSW or vi.mock for zero-network-hit tests
+
+### Rejected
+- System cron (cross-platform complexity)
+- Complex HTML templating engines (Handlebars, EJS)
+
+### Open Questions to Resolve in PRD
+1. Weather location config: lat/lon vs city name via env vars?
+2. HTML output path: fixed or configurable via env var?
+3. DB pruning: when does it run? (recommend: during cron job run)
+
+## Must-Haves (from PLAN.md)
+- Fetch from 4 live APIs: OpenWeatherMap, HN Algolia, GitHub notifications, Wikipedia random
+- Render as terminal output (chalk) and HTML file
+- Schedule via cron — configurable time via env var
+- Store last 30 days of briefs in SQLite
+- All external API calls mocked in tests — zero real network hits in test suite
+
+## Out of Scope
+- No email sending in v1
+- No web dashboard or frontend
+- No auth system
+
+## Constraints (CLAUDE.md)
+- Tech: TypeScript, pnpm, SQLite + Drizzle, Vitest
+- Always use: Drizzle ORM, zod, pnpm, shadcn/ui
+- File structure: src/api/, src/db/, src/services/, src/types/
+- Naming: kebab-case files, PascalCase classes, camelCase functions, snake_case DB columns
+- Tests: Vitest + Playwright, 90% coverage, unit + integration + E2E
+- Review: Correctness + performance + security + no regressions
+
+## PRD Requirements
+Produce PRD.md v1.0 covering:
+1. Overview & goals
+2. API specs (endpoints, auth, zod schemas for each response)
+3. SQLite schema (briefs table, columns, 30-day pruning)
+4. Rendering spec (terminal layout with chalk, HTML file structure)
+5. Cron + env var config (.env spec: OPENWEATHER_API_KEY, GITHUB_TOKEN, WEATHER_CITY or WEATHER_LAT/LON, CRON_SCHEDULE, HTML_OUTPUT_PATH)
+6. Error handling strategy (what happens when an API fails — partial brief or abort?)
+7. Test strategy (which units to test, mock approach, coverage targets)
+8. File structure mapping (which src/ folders own which concerns)
+9. Out of scope / v2 ideas
+
+## When Done
+1. Write PRD.md (v1.0) with changelog table
+2. Write handover/prd.md with decisions for build agent
+3. move_to_review with summary

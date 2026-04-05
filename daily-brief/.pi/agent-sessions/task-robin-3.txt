@@ -1,0 +1,414 @@
+Synthesise everything into a final PRD. Write to PRD.md (or update it if it exists —
+increment the version in the changelog table at the top).
+
+PRD must include: Executive Summary, Problem Statement, Goals and Non-Goals,
+User Stories (prioritised), Technical Approach, Risks and Mitigations,
+Open Questions, Success Metrics, Phase Breakdown.
+
+WHEN DONE — write handover/prd.md with:
+## Decided
+- [requirements confirmed, approach chosen]
+## Rejected
+- [approaches ruled out by board]
+## Open
+- [questions build agent should watch for]
+## Output
+- PRD.md v[x.x] — [summary of what changed]
+
+Then call move_to_review for the PRD task with PR link and version number.
+
+Board findings: I reviewed the board inputs against `handover/research.md`, `PLAN.md`, and the original task brief.
+
+## Strategic Assessment
+
+The research choices are directionally good, but the board should **not treat them as settled yet**. There is a major alignment problem: the **research handover conflicts with the original brief/PLAN/PRD assumptions** on key APIs. If you proceed to implementation without reconciling that drift, you risk building the wrong product cleanly.
+
+### Highest-priority board concern
+There are two competing specs in circulation:
+
+- **Research handover says:** Open-Meteo, Firebase HN API, GitHub REST, Wikipedia Action API
+- **Original brief / current PRD baseline say:** OpenWeatherMap, HN Algolia, Wikipedia REST summary
+
+That is not cosmetic. It changes:
+- auth requirements
+- response shapes
+- implementation complexity
+- UX quality of the generated brief
+- test fixtures
+- env var contract
+
+My recommendation: **board resolves API canon now before build starts.**
+
+---
+
+## Option Ratings
+
+Scale: **1 low / poor → 5 high / strong**
+
+## 1) Weather API
+
+### Option A — Open-Meteo
+**Feasibility:** 5/5  
+**Risk:** 2/5  
+**Strategic fit:** 5/5  
+
+**Why it wins**
+- No API key, lower setup friction
+- Simpler onboarding for a personal cron tool
+- Good enough for “daily brief” use case
+- Better fit with “minimal personal utility” than commercial weather APIs
+
+**Risks / assumptions to challenge**
+- Research cites `current_weather=true`; verify it still matches the intended production response contract
+- If the product wants “city-first” UX, Open-Meteo works best with coordinates, so geocoding may become a hidden requirement
+- Weather codes are less human-friendly than descriptive text unless you map them yourself
+
+**Board take**
+Best default if the product optimizes for **ease, reliability, and low-friction setup**.
+
+---
+
+### Option B — OpenWeatherMap
+**Feasibility:** 4/5  
+**Risk:** 3/5  
+**Strategic fit:** 3/5  
+
+**Pros**
+- City-name input is straightforward
+- Human-readable weather descriptions out of the box
+- Well-known API
+
+**Cons**
+- API key and account creation add friction
+- Strictly weaker strategic fit for a personal automation tool where simplicity matters
+- Research already ruled it out; keeping it would mean knowingly choosing more overhead
+
+**Board take**
+Viable, but strategically inferior unless the product explicitly prioritizes **city-name configuration over frictionless setup**.
+
+**Recommendation:** Choose **Open-Meteo**, but decide whether config is:
+- `WEATHER_LAT` / `WEATHER_LON` only, or
+- city input plus geocoding fallback
+
+Do not leave that ambiguous.
+
+---
+
+## 2) Hacker News source
+
+### Option A — Firebase official HN API
+**Feasibility:** 4/5  
+**Risk:** 3/5  
+**Strategic fit:** 4/5  
+
+**Pros**
+- Official source
+- Stable and canonical
+- Strong long-term correctness
+
+**Cons**
+- Requires multiple requests: one for IDs, then N item fetches
+- More implementation complexity
+- More failure points and slower runs unless batched carefully
+
+**Strategic risk**
+For a cron-based personal brief, “official” may matter less than “simple and robust.” Officialness is not free.
+
+---
+
+### Option B — HN Algolia API
+**Feasibility:** 5/5  
+**Risk:** 2/5  
+**Strategic fit:** 4/5  
+
+**Pros**
+- Single query gives enriched front-page data
+- Simpler implementation and testing
+- Faster and cleaner for v1 brief generation
+
+**Cons**
+- Not the canonical source
+- Search/indexing lag could create slight divergence from official top stories
+
+**Board take**
+If the goal is **best v1 execution with minimum complexity**, Algolia is the stronger delivery choice.  
+If the goal is **source purity**, Firebase wins.
+
+**Recommendation:** For v1, I would actually favor **Algolia** unless “official API only” is a product principle.  
+The current research picked Firebase, but I’d challenge that assumption: you may be trading simplicity away for purity you don’t need.
+
+---
+
+## 3) GitHub integration
+
+### Option A — REST Notifications API
+**Feasibility:** 5/5  
+**Risk:** 3/5  
+**Strategic fit:** 5/5  
+
+**Pros**
+- Correct scope for the use case
+- Simple
+- Already validated in research
+- Lower implementation complexity than GraphQL
+
+**Risks to stress-test**
+- Notification `subject.url` is often an API URL, not directly user-friendly HTML
+- Fine-grained PAT behavior and scopes can trip users up
+- Notifications API can return a lot of noise if not filtered or normalized
+
+**Board take**
+Correct choice.
+
+**But board should add two requirements**
+1. Normalize API URLs to human-facing GitHub URLs where possible  
+2. Define behavior when token is missing/invalid/rate-limited:
+   - skip section with warning
+   - do not fail whole brief
+
+---
+
+### Option B — GraphQL
+**Feasibility:** 2/5  
+**Risk:** 4/5  
+**Strategic fit:** 2/5  
+
+Overbuilt for v1. Research was right to reject it.
+
+---
+
+## 4) Wikipedia source
+
+### Option A — Action API random page
+**Feasibility:** 4/5  
+**Risk:** 3/5  
+**Strategic fit:** 3/5  
+
+**Pros**
+- Simple random title fetch
+- Stable old-school API
+
+**Cons**
+- Usually gives you only a random page identifier/title
+- To create a compelling brief, you probably need a second request for summary/extract
+- Adds hidden orchestration complexity
+
+**Key challenge**
+The board should ask: is “a random article title” enough?  
+For a daily brief, probably not. Users want a short readable summary.
+
+---
+
+### Option B — REST random summary endpoint
+**Feasibility:** 5/5  
+**Risk:** 2/5  
+**Strategic fit:** 5/5  
+
+**Pros**
+- Better UX immediately: title + summary + canonical URL
+- Fewer transformation steps
+- Stronger fit for HTML and terminal rendering
+
+**Cons**
+- Slightly less aligned with the research choice, but much more aligned with product value
+
+**Board take**
+I would push back on the research decision here.  
+**Strategically, the REST summary endpoint is better for the product.**
+
+If the board keeps the Action API, it should explicitly accept:
+- more requests
+- more parsing logic
+- weaker user experience unless summary-fetch is added
+
+**Recommendation:** Use **Wikipedia REST random summary** for v1 unless there is a concrete reason not to.
+
+---
+
+## 5) Scheduler
+
+### Option A — node-cron inside app
+**Feasibility:** 5/5  
+**Risk:** 4/5  
+**Strategic fit:** 3/5  
+
+**Pros**
+- Cross-platform
+- Simple for a Node app
+- Good developer experience
+
+**Cons**
+- Misses runs if the process is down
+- Makes reliability depend on a long-running process
+- Weak for “daily automation” unless deployment/runtime is explicitly managed
+
+**Board stress test**
+What happens if:
+- laptop is asleep at scheduled time?
+- process crashes overnight?
+- machine reboots?
+- DST shifts?
+
+If those cases matter, node-cron alone is not enough.
+
+---
+
+### Option B — system cron / external scheduler
+**Feasibility:** 3/5  
+**Risk:** 2/5  
+**Strategic fit:** 5/5  
+
+**Pros**
+- Better operational reliability
+- Better fit for a true daily job
+
+**Cons**
+- Less portable
+- Slightly more setup/documentation burden
+
+**Board take**
+Research rejected system cron for complexity, which is fair for implementation.  
+But strategically, the board should not confuse **easier to code** with **best operating model**.
+
+**Recommendation:**  
+For v1:
+- implement a **single-run CLI command**
+- document scheduling via **system cron** as preferred in production/personal use
+- keep `node-cron` optional if you want an always-on mode
+
+That gives both portability and reliability.
+
+---
+
+## 6) Rendering approach
+
+### Option A — Chalk + inline HTML
+**Feasibility:** 5/5  
+**Risk:** 1/5  
+**Strategic fit:** 5/5  
+
+Correct choice. Minimal, sufficient, low risk.
+
+### Option B — templating engine / UI framework
+**Feasibility:** 3/5  
+**Risk:** 3/5  
+**Strategic fit:** 2/5  
+
+Unnecessary in v1. Research rejection was correct.
+
+---
+
+## 7) Storage model
+
+### Option A — SQLite + Drizzle, keep 30 days
+**Feasibility:** 5/5  
+**Risk:** 2/5  
+**Strategic fit:** 5/5  
+
+Strong fit for:
+- personal tool
+- simple historical archive
+- deterministic local persistence
+
+**Risks to resolve**
+- prune by timestamp vs count
+- timezone consistency for “30 days”
+- whether to store raw payload JSON only, or also index summary metadata
+
+**Board take**
+Correct choice.
+
+---
+
+## Key Risks the Board Should Surface
+
+### 1. Spec drift risk — highest
+Research, PLAN, and existing PRD assumptions do not match.  
+This is the biggest delivery risk because it creates false confidence.
+
+**Board action:** lock one canonical API set before build.
+
+---
+
+### 2. Scheduler reliability risk
+A cron feature that silently misses runs undermines the product’s core promise.
+
+**Board action:** require a single-run CLI and document external scheduling as preferred.
+
+---
+
+### 3. Wikipedia UX risk
+Action API may technically work while producing a weaker brief.
+
+**Board action:** require title + summary + URL, not just random page title.
+
+---
+
+### 4. HN complexity creep
+Firebase official API is “correct” but may be a poor v1 trade if it requires many network calls.
+
+**Board action:** explicitly decide whether “officialness” is worth added implementation cost.
+
+---
+
+### 5. GitHub notification usability risk
+Raw API payloads don’t automatically map to readable, clickable user output.
+
+**Board action:** require normalization into repo name, subject type, human URL, updated time.
+
+---
+
+### 6. Partial-failure policy ambiguity
+If one API fails, what exactly is stored? What gets rendered? What counts as a successful run?
+
+**Board action:** define success as “brief generated with best-effort sections,” and persist partial briefs with per-section status.
+
+---
+
+## Recommended Board Decisions
+
+### Recommended v1 stack
+- **Weather:** Open-Meteo
+- **HN:** Algolia for v1 simplicity, unless official-source purity is mandatory
+- **GitHub:** REST Notifications API
+- **Wikipedia:** REST random summary endpoint
+- **Storage:** SQLite + Drizzle
+- **Scheduling:** single-run CLI + documented system cron; `node-cron` optional, not foundational
+- **Rendering:** Chalk + inline HTML
+
+---
+
+## Final Ratings Summary
+
+| Decision Area | Option | Feasibility | Risk | Strategic Fit | Board View |
+|---|---|---:|---:|---:|---|
+| Weather | Open-Meteo | 5 | 2 | 5 | Best choice |
+| Weather | OpenWeatherMap | 4 | 3 | 3 | Acceptable, weaker |
+| HN | Firebase official | 4 | 3 | 4 | Valid, more complex |
+| HN | Algolia | 5 | 2 | 4 | Better v1 trade-off |
+| GitHub | REST notifications | 5 | 3 | 5 | Best choice |
+| GitHub | GraphQL | 2 | 4 | 2 | Reject |
+| Wikipedia | Action API | 4 | 3 | 3 | Functional, weaker UX |
+| Wikipedia | REST summary | 5 | 2 | 5 | Better product fit |
+| Scheduler | node-cron only | 5 | 4 | 3 | Convenient, fragile |
+| Scheduler | system cron / external | 3 | 2 | 5 | Better operational fit |
+| Rendering | Chalk + inline HTML | 5 | 1 | 5 | Best choice |
+| Storage | SQLite + Drizzle | 5 | 2 | 5 | Best choice |
+
+---
+
+## Bottom Line
+
+The research phase made good simplification moves, but I would **not approve the board package as-is** because the core API selections are still inconsistent across artifacts.
+
+### My recommendation to the board
+1. **Resolve the canonical API set now**
+2. Prefer **product-fit over theoretical purity**
+3. Avoid making `node-cron` the only operational model
+4. Require **summary-quality output**, especially for Wikipedia and GitHub
+
+If you want, I can turn this into a **board-ready decision memo** or directly draft the **PRD decision section with recommended choices and rationale**.
+Original topic: Full task details are in FILE: /Users/cedric/code/ai/learning/daily-brief/.pi/agent-sessions/original-3.txt
+Use the read tool to load it if you need the complete context.
+
+Summary: Board-PRD stage for the daily-brief project. Project: daily-brief Description: A personal daily brief generator that pulls weather, top HN stories, GitHub notifications, and a random Wikipedia article. Renders as terminal output (chalk) and HTML file. Runs on a cron schedule. Stores last 30 days of briefs in SQLite. ## Your Job Translate research findings into a versioned PRD.md (v1.0) and hando...

@@ -1,0 +1,40 @@
+You are the board's research director. Robin has briefed you.
+Search the web for: current best practices, competing solutions, relevant research,
+industry standards, and anything Robin may have missed.
+
+Robin's brief: I'll start by reading the task file and then follow the startup sequence.No existing PRD task. Let me also check existing PRD.md and PLAN.md before creating the task.Good — PRD.md is a stub. Now I have all context needed. Let me create the task and then produce the full PRD.Now I'll resolve the three open questions using sound engineering judgment, then write the full PRD.
+
+**Resolving open questions:**
+1. **Weather location:** `WEATHER_CITY` (city name) is simpler UX for a personal tool; lat/lon as `WEATHER_LAT`/`WEATHER_LON` gives precision. Decision: support both — city name takes precedence when set, lat/lon as fallback.
+2. **HTML output path:** Configurable via `HTML_OUTPUT_PATH` env var, defaults to `./output/brief.html`.
+3. **DB pruning:** Runs at the start of each cron job, before inserting the new brief.Now write the handover file for the build agent:Now update PROGRESS.md and move the task to review:Done. Here's a summary of what was produced:
+
+---
+
+## PRD v1.0 — daily-brief
+
+**All 3 open questions resolved:**
+
+| Question | Decision |
+|---|---|
+| Weather location | `WEATHER_CITY` takes precedence; `WEATHER_LAT`/`WEATHER_LON` as fallback; both absent → skip weather with warning |
+| HTML output path | Configurable via `HTML_OUTPUT_PATH`, default `./output/brief.html` |
+| DB pruning timing | Runs at the **start** of each cron tick, before inserting new brief |
+
+**PRD.md v1.0 covers:**
+- **§5** — Full `.env` spec (6 variables, required/optional/defaults)
+- **§6** — All 4 API specs with exact endpoints, auth, and zod schemas
+- **§7** — `DailyBrief` aggregated type
+- **§8** — SQLite schema (`briefs` table) + Drizzle definition + pruning pseudocode
+- **§9** — Terminal chalk layout + HTML file structure (dark mode, inline CSS)
+- **§10** — Error handling table — partial brief on failure, never abort
+- **§11** — Exact file structure mapping (`src/api/`, `src/db/`, `src/services/`, `src/renderers/`, `src/types/`)
+- **§12** — Test strategy: MSW handlers, 90% statement coverage, key edge cases listed
+- **§13** — Entry point behaviour + cron tick sequence
+
+**handover/prd.md** written for the build agent with: decided/rejected/open sections, key type contracts, and file structure to scaffold.
+
+Original topic: Full task details are in FILE: /Users/cedric/code/ai/learning/daily-brief/.pi/agent-sessions/original-1.txt
+Use the read tool to load it if you need the complete context.
+
+Summary: Board-PRD stage for the daily-brief project. Project: daily-brief Description: A personal daily brief generator that pulls weather, top HN stories, GitHub notifications, and a random Wikipedia article. Renders as terminal output (chalk) and HTML file. Runs on a cron schedule. Stores last 30 days of briefs in SQLite. ## Your Job Translate research findings into a versioned PRD.md (v1.0) and hando...

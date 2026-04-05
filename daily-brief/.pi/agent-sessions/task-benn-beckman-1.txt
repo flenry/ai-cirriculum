@@ -1,0 +1,83 @@
+Stress-test this research. Check data, challenge assumptions, find gaps.
+Are conclusions supported? What was missed?
+
+I'll start by reading the required files and checking for existing tasks.No existing research task. Let me create one, then dig into all the APIs and technical areas.Now let me investigate all APIs and technical areas simultaneously.Now I have all the information needed. Let me write the comprehensive research handover.Research complete. Here's what was found:
+
+---
+
+## Research Summary
+
+### APIs — All Verified Live
+
+| API | Endpoint | Auth | Rate Limit |
+|-----|----------|------|-----------|
+| **OpenWeatherMap** | `data/2.5/weather?q={city}&units=metric&appid={key}` | API key (query param) | 1,000/day free — safe for daily brief |
+| **HN Algolia** | `/v1/search?tags=front_page&hitsPerPage=10` | None | No documented limits |
+| **GitHub Notifications** | `/notifications?all=false&per_page=20` | Bearer PAT (needs `notifications` scope) | 5,000/hr authenticated |
+| **Wikipedia Random** | `/api/rest_v1/page/random/summary` | None (User-Agent header required) | Not documented |
+
+### Key Technical Decisions
+
+- **SQLite schema:** Single `briefs` table, JSON blobs per section (`weather`, `hn_stories`, `github`, `wiki`, `html_output`), prune `WHERE date < date('now', '-30 days')` on each insert
+- **Cron:** `node-cron` v4 (built-in TS types, zero deps), `CRON_SCHEDULE` env var (default `"0 7 * * *"`), with a `--run-now` flag for one-shot execution
+- **Chalk:** Use chalk 5 (ESM) + `tsx` runner — cleaner than chalk 4 + ts-node for modern TS
+- **HTML:** TypeScript tagged template literals — no external lib needed, snapshot-testable
+- **Mocking:** `vi.mock()` per API module (e.g. `src/api/weather.ts`) — zero real network hits, no MSW overhead needed
+
+### 8 Open Questions for board-prd
+1. CLI one-shot vs daemon mode (recommend: `--run-now` flag)
+2. Weather by city name vs coords (recommend: support both, city primary)
+3. Graceful degradation when API keys missing (recommend: skip section, warn)
+4. HN story count (recommend: 10, env-configurable)
+5. HTML output path (recommend: `./output/brief-YYYY-MM-DD.html`)
+6. Wikipedia redirect mocking approach
+7. Brief deduplication on same day (recommend: upsert via unique `date` column)
+8. Pruning timing (recommend: same transaction as insert)
+
+Original: Research stage for the daily-brief project.
+
+Project: daily-brief
+Description: A personal daily brief generator that pulls weather, top HN stories, GitHub notifications, and a random Wikipedia article. Renders as terminal output (chalk) and HTML file. Runs on a cron schedule. Stores last 30 days of briefs in SQLite.
+
+## Your Job (Research Only — No Code)
+Validate all APIs, map data shapes, identify technical constraints, and surface unknowns for the PRD stage.
+
+## APIs to Research
+1. **OpenWeatherMap** — current weather by city/coords. Free tier limits, auth (API key), endpoint, response shape.
+2. **HN Algolia** — top HN stories. Endpoint, no auth, response shape, how to get "top" stories.
+3. **GitHub Notifications** — personal notifications API. Auth (PAT), endpoint, response shape, rate limits.
+4. **Wikipedia Random** — random article endpoint. No auth, response shape, how to get a summary.
+
+## Technical Areas to Map
+- SQLite schema: storing 30 days of briefs (what to store, how to prune)
+- Cron scheduling: node-cron vs cron vs system cron — which fits best for a TypeScript project with env-var-configurable time
+- Terminal rendering: chalk options, structured layout
+- HTML rendering: lightweight templating (no framework) for clean email-style HTML output
+- Mocking strategy: how to mock all 4 APIs in Vitest with zero real network hits
+
+## Must-Haves (from PLAN.md)
+- Fetch from 4 live APIs: OpenWeatherMap, HN Algolia, GitHub notifications, Wikipedia random
+- Render as terminal output (chalk) and HTML file
+- Schedule via cron — configurable time via env var
+- Store last 30 days of briefs in SQLite
+- All external API calls mocked in tests — zero real network hits in test suite
+
+## Out of Scope
+- No email sending in v1
+- No web dashboard or frontend
+- No auth system
+
+## Constraints (CLAUDE.md)
+- Tech: TypeScript, pnpm, SQLite + Drizzle, Vitest
+- Always use: Drizzle ORM, zod, pnpm, shadcn/ui
+- File structure: src/api/, src/db/, src/services/, src/types/
+- Naming: kebab-case files, PascalCase classes, camelCase functions, snake_case DB columns
+
+## Files to Read First
+- CLAUDE.md
+- PLAN.md
+- context/research.md
+
+## When Done
+1. Write findings to handover/research.md
+2. move_to_review with a summary of what was found
