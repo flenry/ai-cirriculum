@@ -106,5 +106,23 @@
     "promptChars": 588,
     "outputChars": 940,
     "elapsedMs": 16809
+  },
+  {
+    "timestamp": "2026-04-05T08:09:13.542Z",
+    "chain": "build-qwen",
+    "agent": "brook",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 1783,
+    "outputChars": 1214,
+    "elapsedMs": 102109
+  },
+  {
+    "timestamp": "2026-04-05T08:39:31.760Z",
+    "chain": "frontend-qwen",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 583,
+    "outputChars": 2084,
+    "elapsedMs": 225945
   }
 ]
