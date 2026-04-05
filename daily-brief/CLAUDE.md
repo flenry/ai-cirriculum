@@ -59,6 +59,7 @@ daily-brief/
 ├── .env.example              # Required env vars template
 ├── output/                   # HTML brief output (gitignored)
 ├── data/                     # SQLite DB (gitignored)
+├── DESIGN.md                 # HTML renderer design system (colors, fonts, layout)
 ├── PRD.md                    # Full product requirements v1.1
 └── PLAN.md                   # Build-stage micro-task breakdown
 ```
@@ -73,17 +74,24 @@ daily-brief/
 
 ## Current State (2026-04-05)
 
-**Build stage complete.** Full implementation exists across all modules.
+**Test-expansion stage complete.** Full implementation + deep HTML renderer tests.
 
 - ✅ 4 API modules (weather, HN, GitHub, Wikipedia) with zod validation
 - ✅ DB layer: schema, client, store, prune (30-day retention)
 - ✅ 2 renderers: terminal (chalk) and HTML file
 - ✅ brief-service orchestrator with partial-failure tolerance
 - ✅ Scheduler wrapper (node-cron) + CLI entry point
-- ✅ MSW mock infrastructure — all API tests pass (39/39)
+- ✅ MSW mock infrastructure — all API tests pass
+- ✅ HTML renderer: 15 tests covering truncation, XSS escaping, dark mode, thumbnails, null handling, GitHub notifications, meta tags
 - ⚠️ DB tests fail on Node v24 — better-sqlite3 lacks prebuilt binary for Node v24.13.0/darwin/arm64. Tests pass on Node ≤22.
 
 **Known Issue:** `better-sqlite3@12.8.0` doesn't ship a prebuilt native binding for Node v24. Use Node 20 or 22 for DB tests, or run `pnpm rebuild better-sqlite3` to compile from source.
+
+## Design System
+
+**Read [`DESIGN.md`](DESIGN.md) before touching `src/renderers/html-renderer.ts`.**
+
+The HTML output follows a strict "Refined GitHub-Dark meets Editorial Print" design system defined in `DESIGN.md`. It specifies exact hex colors, font pairings (Playfair Display / Source Serif 4 / JetBrains Mono), spacing, component inventory, and the Wikipedia truncation rule. Deviating from these specs without updating `DESIGN.md` first is not allowed.
 
 ## How to Work on This
 

@@ -53,7 +53,7 @@ pnpm test
 # All other tests (API, lib, renderers, services) pass on any Node version.
 ```
 
-**Test coverage:** 13 test files, 41 tests. All API/lib/renderer/service tests pass. DB tests require Node 20 or 22.
+**Test coverage:** 13 test files, 51 tests. All API/lib/renderer/service tests pass on any Node version. DB tests require Node 20 or 22 (better-sqlite3 native binding issue on Node v24).
 
 ## Workflow
 
@@ -68,5 +68,6 @@ pnpm test
 See [CLAUDE.md](CLAUDE.md) for routing table and project map.
 See [PRD.md](PRD.md) for requirements.
 See [PLAN.md](PLAN.md) for current task breakdown.
+See [DESIGN.md](DESIGN.md) for HTML renderer design system (colors, fonts, layout).
 
 _Last updated: 2026-04-05_

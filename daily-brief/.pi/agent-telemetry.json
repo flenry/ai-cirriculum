@@ -133,5 +133,32 @@
     "promptChars": 2806,
     "outputChars": 1848,
     "elapsedMs": 77103
+  },
+  {
+    "timestamp": "2026-04-05T08:46:26.504Z",
+    "chain": "frontend-qwen",
+    "agent": "sanji-qwen",
+    "model": "openrouter/qwen/qwen3.6-plus:free",
+    "promptChars": 4780,
+    "outputChars": 26572,
+    "elapsedMs": 337634
+  },
+  {
+    "timestamp": "2026-04-05T08:47:46.960Z",
+    "chain": "frontend-qwen",
+    "agent": "evaluator-qwen",
+    "model": "anthropic/claude-haiku-4-5-20251001",
+    "promptChars": 29299,
+    "outputChars": 3305,
+    "elapsedMs": 71859
+  },
+  {
+    "timestamp": "2026-04-05T08:48:07.072Z",
+    "chain": "frontend-qwen",
+    "agent": "usopp-qwen",
+    "model": "openrouter/qwen/qwen3.6-plus:free",
+    "promptChars": 589,
+    "outputChars": 1056,
+    "elapsedMs": 20106
   }
 ]

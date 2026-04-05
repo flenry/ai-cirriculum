@@ -1,0 +1,83 @@
+Build complete. Update CLAUDE.md and README.md surgically.
+Note the design system in CLAUDE.md — future agents must know about DESIGN.md.
+Commit: git add -A && git commit -m "docs: update README and CLAUDE.md"
+Push branch or create PR depending on whether new or existing project.
+
+Spec: Expand and deepen the HTML renderer test suite for the daily-brief project.
+
+## Context
+Project: daily-brief — a CLI tool that generates a personal daily brief from 4 APIs and renders to terminal + HTML file.
+
+## Files to Read First
+- src/renderers/html-renderer.ts
+- tests/renderers/html-renderer.test.ts
+- src/types/brief.ts
+- CLAUDE.md
+
+## Current State
+5 tests exist in tests/renderers/html-renderer.test.ts covering:
+1. Valid HTML string (starts with <!DOCTYPE html>)
+2. Null sections render "⚠ Unavailable"
+3. XSS escaping in HN story titles
+4. Renders all 10 HN stories
+5. All 4 section IDs present even when all data is null
+
+## Confirmed Gaps to Cover
+
+### Bug — Must Fix in Renderer
+- **Wikipedia 280-char truncation**: PRD requires summary truncated at word boundary within 280 chars. The renderer currently outputs the full summary with no truncation. This is a real bug — write a failing test first, then fix the renderer.
+
+### New Tests Needed
+1. **Dark mode CSS** — output contains `background: #0d1117`
+2. **escapeHtml on GitHub fields** — repo name, notification title, and humanUrl with `<script>` injected — must be escaped
+3. **GitHub notifications non-empty** — render a brief with 2 real GitHub notifications and assert their repo + title appear in output
+4. **Wikipedia thumbnailUrl** — when `thumbnailUrl` is set, assert it appears in the HTML (or if renderer doesn't render it yet, write the failing test + add it)
+5. **charset + viewport meta** — output contains `<meta charset="UTF-8">` and `<meta name="viewport"`
+6. **feelsLikeC null** — weather with `feelsLikeC: null` should render "N/A" not "null" or "undefined"
+7. **Wikipedia extract < 280 chars** — no truncation applied (full text preserved)
+8. **Wikipedia extract exactly at word boundary** — 300-char summary truncates cleanly at last word before 280, not mid-word
+
+## Constraints (CLAUDE.md)
+- Tech: TypeScript, pnpm, SQLite + Drizzle, Vitest
+- Naming: kebab-case files, PascalCase classes, camelCase functions
+- Always use: zod, pnpm
+- Test coverage target: ≥ 90% statement coverage
+
+## TDD Rules
+- Usopp writes ALL failing tests first
+- Sanji implements fixes to make them pass
+- Zero real network calls (these are pure unit tests — no network needed)
+- Do NOT delete or modify existing passing tests
+
+## When Done
+1. All existing + new tests passing
+2. Renderer patched for Wikipedia truncation + thumbnailUrl
+3. move_to_review with summary of tests added and bugs fixed
+Build output: I'll read the task file to understand what needs to be done.
+
+I'll run the full test suite to check the current status.
+
+## Test Suite Results
+
+**Total:** 13 test files, 51 tests  
+**Passed:** 10 test files, 49 tests  
+**Failed:** 3 test files, 2 tests
+
+### Failing Tests
+
+All 3 failing files are DB-related:
+
+1. **tests/db/client.test.ts** (2 failures)
+   - `db/client > creates db at specified path`
+   - `db/client > works with :memory:`
+   - **Error:** `Could not locate the bindings file` — better-sqlite3 native module doesn't have a prebuilt binary for Node v24.13.0
+
+2. **tests/db/prune.test.ts** — Entire suite fails to load (same better-sqlite3 binding error)
+
+3. **tests/db/store.test.ts** — Entire suite fails to load (same better-sqlite3 binding error)
+
+### Summary
+
+❌ 2 tests failing — Sanji needs to fix
+
+The failures are **environment-specific**: better-sqlite3@12.8.0 lacks native bindings for Node v24.13.0 (darwin/arm64). This is a known issue documented in CLAUDE.md. All non-DB tests pass (49/49), including all 15 HTML renderer tests.
