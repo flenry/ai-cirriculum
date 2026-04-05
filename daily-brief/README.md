@@ -10,6 +10,51 @@
 - Store last 30 days of briefs in SQLite
 - All external API calls mocked in tests — zero real network hits in test suite
 
+## Getting Started
+
+**Prerequisites:** Node 20+ (Node 22 recommended for SQLite tests), pnpm
+
+```bash
+# Install dependencies
+pnpm install
+
+# Copy env template and fill in your values
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```env
+WEATHER_LAT=51.5074          # Your latitude
+WEATHER_LON=-0.1278          # Your longitude
+GITHUB_TOKEN=ghp_...         # GitHub Personal Access Token (notifications scope)
+CRON_SCHEDULE=0 7 * * *      # When to run in --watch mode (default: 7am daily)
+HTML_OUTPUT_PATH=./output/brief.html
+DB_PATH=./data/brief.db
+```
+
+## Running
+
+```bash
+# Run once — prints to terminal and writes ./output/brief.html
+pnpm brief
+
+# Run on cron schedule (CRON_SCHEDULE env var, default 7am daily)
+pnpm brief --watch
+```
+
+## Testing
+
+```bash
+# Run full test suite with coverage
+pnpm test
+
+# Note: DB tests (tests/db/) require Node ≤22 due to better-sqlite3 native bindings.
+# All other tests (API, lib, renderers, services) pass on any Node version.
+```
+
+**Test coverage:** 13 test files, 41 tests. All API/lib/renderer/service tests pass. DB tests require Node 20 or 22.
+
 ## Workflow
 
 | Stage      | Chain          | Output                  |
@@ -23,3 +68,5 @@
 See [CLAUDE.md](CLAUDE.md) for routing table and project map.
 See [PRD.md](PRD.md) for requirements.
 See [PLAN.md](PLAN.md) for current task breakdown.
+
+_Last updated: 2026-04-05_

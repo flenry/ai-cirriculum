@@ -1,0 +1,110 @@
+[
+  {
+    "timestamp": "2026-04-05T07:17:23.686Z",
+    "chain": "research",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 2703,
+    "outputChars": 2206,
+    "elapsedMs": 301427
+  },
+  {
+    "timestamp": "2026-04-05T07:20:34.577Z",
+    "chain": "research",
+    "agent": "benn-beckman",
+    "model": "github-copilot/gpt-5.4",
+    "promptChars": 592,
+    "outputChars": 668,
+    "elapsedMs": 190887
+  },
+  {
+    "timestamp": "2026-04-05T07:21:04.851Z",
+    "chain": "research",
+    "agent": "vegapunk",
+    "model": "github-copilot/gemini-3.1-pro-preview",
+    "promptChars": 585,
+    "outputChars": 406,
+    "elapsedMs": 30272
+  },
+  {
+    "timestamp": "2026-04-05T07:26:23.663Z",
+    "chain": "board-prd",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 585,
+    "outputChars": 2226,
+    "elapsedMs": 143740
+  },
+  {
+    "timestamp": "2026-04-05T07:26:58.302Z",
+    "chain": "board-prd",
+    "agent": "vegapunk",
+    "model": "github-copilot/gemini-3.1-pro-preview",
+    "promptChars": 588,
+    "outputChars": 485,
+    "elapsedMs": 34635
+  },
+  {
+    "timestamp": "2026-04-05T07:28:16.427Z",
+    "chain": "board-prd",
+    "agent": "law",
+    "model": "github-copilot/gpt-5.4",
+    "promptChars": 1294,
+    "outputChars": 11442,
+    "elapsedMs": 78123
+  },
+  {
+    "timestamp": "2026-04-05T07:31:33.230Z",
+    "chain": "board-prd",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 584,
+    "outputChars": 1912,
+    "elapsedMs": 196799
+  },
+  {
+    "timestamp": "2026-04-05T07:46:25.511Z",
+    "chain": "build-qwen",
+    "agent": "robin",
+    "model": "anthropic/claude-sonnet-4-6",
+    "promptChars": 584,
+    "outputChars": 2633,
+    "elapsedMs": 399911
+  },
+  {
+    "timestamp": "2026-04-05T07:56:27.152Z",
+    "chain": "build-qwen",
+    "agent": "usopp-qwen",
+    "model": "openrouter/qwen/qwen3.6-plus:free",
+    "promptChars": 1052,
+    "outputChars": 16800,
+    "elapsedMs": 601633
+  },
+  {
+    "timestamp": "2026-04-05T08:05:34.564Z",
+    "chain": "build-qwen",
+    "agent": "zoro-qwen",
+    "model": "openrouter/qwen/qwen3.6-plus:free",
+    "promptChars": 20579,
+    "outputChars": 12453,
+    "elapsedMs": 547376
+  },
+  {
+    "timestamp": "2026-04-05T08:07:14.557Z",
+    "chain": "build-qwen",
+    "agent": "evaluator-qwen",
+    "model": "anthropic/claude-haiku-4-5-20251001",
+    "promptChars": 15881,
+    "outputChars": 2136,
+    "elapsedMs": 58719
+  },
+  {
+    "timestamp": "2026-04-05T08:07:31.407Z",
+    "chain": "build-qwen",
+    "agent": "usopp-qwen",
+    "model": "openrouter/qwen/qwen3.6-plus:free",
+    "promptChars": 588,
+    "outputChars": 940,
+    "elapsedMs": 16809
+  }
+]

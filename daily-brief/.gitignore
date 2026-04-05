@@ -1,45 +1,5 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# Build
-dist/
-build/
-.next/
-out/
-
-# Env
+node_modules
+dist
 .env
-.env.local
-.env.*.local
-
-# Logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Editor
-.vscode/settings.json
-.idea/
-*.swp
-*.swo
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
-
-# Pi
-.pi/agent-sessions/logs/
-.pi/agent-telemetry.json
-
-# Test cache
-.pytest_cache/
-coverage/
+output/
+data/

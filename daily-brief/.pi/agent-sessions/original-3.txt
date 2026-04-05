@@ -1,72 +1,78 @@
-Board-PRD stage for the daily-brief project.
+Build stage for the daily-brief project.
 
 Project: daily-brief
 Description: A personal daily brief generator that pulls weather, top HN stories, GitHub notifications, and a random Wikipedia article. Renders as terminal output (chalk) and HTML file. Runs on a cron schedule. Stores last 30 days of briefs in SQLite.
 
 ## Your Job
-Translate research findings into a versioned PRD.md (v1.0) and handover/prd.md for the build agent.
+Implement the full project following PRD v1.1. Use TDD: failing tests first, then implement to pass them.
 
 ## Files to Read First
 - CLAUDE.md
 - PLAN.md
 - PRD.md
-- context/board-prd.md
-- handover/research.md
+- context/build.md
+- handover/prd.md
 
-## Research Findings Summary (from handover/research.md)
+## Key Decisions (from handover/prd.md)
 
-### Decided
-- Weather: OpenWeatherMap `GET /data/2.5/weather?q={city}&appid={key}` — free tier 1000 calls/day
-- HN: Algolia `GET http://hn.algolia.com/api/v1/search?tags=front_page` — no auth
-- GitHub: `GET https://api.github.com/notifications` — PAT required, 5000 req/hr
-- Wikipedia: `GET https://en.wikipedia.org/api/rest_v1/page/random/summary` — no auth
-- SQLite + Drizzle ORM for storage
-- node-cron for scheduling via CRON_SCHEDULE env var
-- chalk for terminal, ES6 template literals for HTML
-- Vitest + MSW or vi.mock for zero-network-hit tests
+### APIs
+- **Weather**: Open-Meteo `GET https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&hourly=relativehumidity_2m,apparent_temperature&forecast_days=1` — free, no API key
+- **HN**: Algolia `GET https://hn.algolia.com/api/v1/search?tags=front_page` — no auth, top 10 stories
+- **GitHub**: `GET https://api.github.com/notifications` — PAT via GITHUB_TOKEN env var
+- **Wikipedia**: `GET https://en.wikipedia.org/api/rest_v1/page/random/summary` — no auth
 
-### Rejected
-- System cron (cross-platform complexity)
-- Complex HTML templating engines (Handlebars, EJS)
+### Database
+- SQLite + Drizzle ORM
+- `briefs` table: id, generated_at, weather_json, hn_json, github_json, wikipedia_json, status_json
+- Pruning: delete records older than 30 days before each insert
+- Duplicate handling: log warning + skip insert (no upsert)
 
-### Open Questions to Resolve in PRD
-1. Weather location config: lat/lon vs city name via env vars?
-2. HTML output path: fixed or configurable via env var?
-3. DB pruning: when does it run? (recommend: during cron job run)
+### Rendering
+- Terminal: chalk, dark colour scheme, structured sections
+- HTML: ES6 template literals, inline CSS, dark mode (#0d1117 background)
 
-## Must-Haves (from PLAN.md)
-- Fetch from 4 live APIs: OpenWeatherMap, HN Algolia, GitHub notifications, Wikipedia random
-- Render as terminal output (chalk) and HTML file
-- Schedule via cron — configurable time via env var
-- Store last 30 days of briefs in SQLite
-- All external API calls mocked in tests — zero real network hits in test suite
+### Scheduling
+- Primary: single-run CLI `pnpm brief`
+- Opt-in: `--watch` flag uses node-cron, reads CRON_SCHEDULE env var
 
-## Out of Scope
-- No email sending in v1
-- No web dashboard or frontend
-- No auth system
+### Partial Failure Policy
+- Best-effort: always generate and store brief even if some APIs fail
+- Per-section `status: { ok: boolean, error?: string }` on DailyBrief type
+
+### Env Vars (.env)
+- WEATHER_LAT, WEATHER_LON
+- GITHUB_TOKEN
+- CRON_SCHEDULE (default: "0 7 * * *")
+- HTML_OUTPUT_PATH (default: "./brief.html")
+
+### File Structure
+- `src/api/` — weather.ts, hn.ts, github.ts, wikipedia.ts
+- `src/db/` — schema.ts, client.ts, store.ts
+- `src/services/` — brief-generator.ts
+- `src/lib/` — weather-codes.ts, github-urls.ts
+- `src/types/` — brief.ts
+- `src/renderers/` — terminal.ts, html.ts
+- `src/index.ts` — CLI entrypoint (single-run + --watch)
+
+### Open Questions (watch for these)
+- Open-Meteo hourly fields: take `hourly[0]` as current-hour value
+- storeBrief duplicates: log warning + skip insert (NOT upsert)
+- Wikipedia extract truncation: truncate at word boundary within 280 chars; skip truncation if extract < 280 chars
+- README must warn that --watch misses runs if process dies
+
+### Test Strategy
+- Vitest + MSW for zero real network calls
+- ≥ 90% statement coverage
+- Test each API fetcher, DB layer, renderers, lib utilities independently
+- Integration test: full brief generation pipeline
 
 ## Constraints (CLAUDE.md)
 - Tech: TypeScript, pnpm, SQLite + Drizzle, Vitest
 - Always use: Drizzle ORM, zod, pnpm, shadcn/ui
-- File structure: src/api/, src/db/, src/services/, src/types/
 - Naming: kebab-case files, PascalCase classes, camelCase functions, snake_case DB columns
-- Tests: Vitest + Playwright, 90% coverage, unit + integration + E2E
 - Review: Correctness + performance + security + no regressions
 
-## PRD Requirements
-Produce PRD.md v1.0 covering:
-1. Overview & goals
-2. API specs (endpoints, auth, zod schemas for each response)
-3. SQLite schema (briefs table, columns, 30-day pruning)
-4. Rendering spec (terminal layout with chalk, HTML file structure)
-5. Cron + env var config (.env spec: OPENWEATHER_API_KEY, GITHUB_TOKEN, WEATHER_CITY or WEATHER_LAT/LON, CRON_SCHEDULE, HTML_OUTPUT_PATH)
-6. Error handling strategy (what happens when an API fails — partial brief or abort?)
-7. Test strategy (which units to test, mock approach, coverage targets)
-8. File structure mapping (which src/ folders own which concerns)
-9. Out of scope / v2 ideas
-
 ## When Done
-1. Write PRD.md (v1.0) with changelog table
-2. Write handover/prd.md with decisions for build agent
-3. move_to_review with summary
+1. All tests passing at ≥ 90% coverage
+2. Write handover/build.md with key implementation decisions
+3. move_to_review with summary of what was built
